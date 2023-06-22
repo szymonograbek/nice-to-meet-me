@@ -22,7 +22,7 @@ export const useWebRTCPeerConnection = ({ roomId }: HookArgs) => {
 
   useEffect(() => {
     // Join the socket
-    socketRef.current = io(process.env.NODE_PUBLIC_SOCKET_URL!);
+    socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL!);
     socketRef.current?.emit("join", roomId);
 
     const setUserVideo = async () => {
