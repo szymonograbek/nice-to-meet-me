@@ -6,7 +6,7 @@ import { ClientToServerEvents, ServerToClientEvents } from "validation";
 const app = express();
 
 const server = http.createServer(app);
-const port = 5001;
+const port = process.env.PORT || "8080";
 
 server.listen(port, () =>
   console.log(`Server listening on http://localhost:${port}`)

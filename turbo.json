@@ -11,7 +11,7 @@
     },
     "build": {
       "dependsOn": ["type-check", "lint"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     }
   }
 }

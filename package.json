@@ -5,13 +5,16 @@
   "main": "index.js",
   "scripts": {
     "dev": "dotenv -- turbo dev",
+    "build": "dotenv -- turbo build",
+    "build:api": "turbo run build --filter=api...",
+    "prune:api": "dotenv -- turbo prune --scope=api --docker",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "turbo": "^1.9.9",
+    "turbo": "^1.10.4",
     "dotenv-cli": "latest"
   }
 }
