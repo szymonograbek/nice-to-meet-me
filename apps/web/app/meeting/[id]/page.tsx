@@ -3,13 +3,6 @@
 import { Camera } from "@/components/Camera";
 import { TrackSwitch } from "@/components/TrackSwitch";
 import { Button } from "@/components/ui/button";
-import { Toggle } from "@/components/ui/toggle";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useTrackControls } from "@/hooks/useTrackControls";
 import { useWebRTCPeerConnection } from "@/hooks/useWebRTCPeerConnection";
 import { Mic, MicOff, PhoneOff, Video, VideoOff } from "lucide-react";
@@ -23,15 +16,18 @@ type MeetingPageProps = {
 export default function MeetingPage({ params }: MeetingPageProps) {
   const roomId = params.id;
 
-  const { leaveRoom, peerVideoRef, userVideoRef, userStream } =
-    useWebRTCPeerConnection({
-      roomId,
-    });
+  const {
+    leaveRoom,
+    peerVideoRef,
+    userVideoRef,
+    userStream,
+    userStreamEnabled,
+  } = useWebRTCPeerConnection({
+    roomId,
+  });
 
   const { toggleAudio, toggleVideo, isAudioEnabled, isVideoEnabled } =
-    useTrackControls({ stream: userStream });
-
-  console.log({ peerVideo: peerVideoRef.current });
+    useTrackControls({ stream: userStream, userStreamEnabled });
 
   return (
     <div className="h-full w-full flex flex-col justify-between">

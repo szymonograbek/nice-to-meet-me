@@ -1,19 +1,16 @@
+import { socket } from "@/lib/socket";
 import { ICE_SERVERS } from "@/utils/constants";
 import { useEffect, useRef, useState } from "react";
-import { Socket, io } from "socket.io-client";
-import { ClientToServerEvents, ServerToClientEvents } from "validation";
 
 type HookArgs = {
   roomId: string;
 };
 
 export const useWebRTCPeerConnection = ({ roomId }: HookArgs) => {
-  const [userStream, setUserStream] = useState<MediaStream | null>(null);
+  const [userStreamEnabled, setUserStreamEnabled] = useState(false);
+
+  const userStream = useRef<MediaStream | null>(null);
   const hostRef = useRef(false);
-  const socketRef = useRef<Socket<
-    ServerToClientEvents,
-    ClientToServerEvents
-  > | null>(null);
 
   const rtcConnectionRef = useRef<RTCPeerConnection | null>(null);
 
@@ -22,12 +19,9 @@ export const useWebRTCPeerConnection = ({ roomId }: HookArgs) => {
 
   useEffect(() => {
     // Join the socket
-    socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL!);
-    socketRef.current?.emit("join", roomId);
+    socket.emit("join", roomId);
 
     const setUserVideo = async () => {
-      if (userStream) return;
-
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: true,
@@ -42,7 +36,8 @@ export const useWebRTCPeerConnection = ({ roomId }: HookArgs) => {
           };
         }
 
-        setUserStream(stream);
+        userStream.current = stream;
+        setUserStreamEnabled(true);
 
         return stream;
       } catch (error) {
@@ -61,13 +56,13 @@ export const useWebRTCPeerConnection = ({ roomId }: HookArgs) => {
       console.log("Room joined!", roomId);
       const stream = await setUserVideo();
 
-      if (stream) socketRef.current?.emit("ready", roomId);
+      if (stream) socket.emit("ready", roomId);
     };
 
     const handleICECandidateEvent = (event: RTCPeerConnectionIceEvent) => {
       console.log("Handle ice candidate");
       if (event.candidate) {
-        socketRef.current?.emit("ice-candidate", event.candidate, roomId);
+        socket.emit("ice-candidate", event.candidate, roomId);
       }
     };
 
@@ -97,15 +92,21 @@ export const useWebRTCPeerConnection = ({ roomId }: HookArgs) => {
     };
 
     const addTracksToRtcConnection = () => {
-      if (!rtcConnectionRef.current || !userStream) return;
+      if (!rtcConnectionRef.current || !userStream.current) return;
 
-      rtcConnectionRef.current.addTrack(userStream.getTracks()[0], userStream);
-      rtcConnectionRef.current.addTrack(userStream.getTracks()[1], userStream);
+      rtcConnectionRef.current.addTrack(
+        userStream.current.getTracks()[0],
+        userStream.current
+      );
+      rtcConnectionRef.current.addTrack(
+        userStream.current.getTracks()[1],
+        userStream.current
+      );
     };
 
     const initiateCall = async () => {
       console.log("Initiate call");
-      if (hostRef.current && userStream) {
+      if (hostRef.current && userStream.current) {
         rtcConnectionRef.current = createPeerConnection();
 
         addTracksToRtcConnection();
@@ -113,13 +114,13 @@ export const useWebRTCPeerConnection = ({ roomId }: HookArgs) => {
         const offer = await rtcConnectionRef.current.createOffer();
 
         rtcConnectionRef.current?.setLocalDescription(offer);
-        socketRef.current?.emit("offer", offer, roomId);
+        socket.emit("offer", offer, roomId);
       }
     };
 
     const handleReceivedOffer = async (offer: RTCSessionDescriptionInit) => {
       console.log("Handle offer");
-      if (!hostRef.current && userStream) {
+      if (!hostRef.current && userStream.current) {
         rtcConnectionRef.current = createPeerConnection();
 
         addTracksToRtcConnection();
@@ -129,7 +130,7 @@ export const useWebRTCPeerConnection = ({ roomId }: HookArgs) => {
         const answer = await rtcConnectionRef.current.createAnswer();
 
         rtcConnectionRef.current?.setLocalDescription(answer);
-        socketRef.current?.emit("answer", answer, roomId);
+        socket.emit("answer", answer, roomId);
       }
     };
 
@@ -156,25 +157,25 @@ export const useWebRTCPeerConnection = ({ roomId }: HookArgs) => {
       }
     };
 
-    socketRef.current?.on("created", handleRoomCreated);
+    socket.on("created", handleRoomCreated);
 
-    socketRef.current?.on("joined", handleRoomJoined);
+    socket.on("joined", handleRoomJoined);
 
-    socketRef.current?.on("ready", initiateCall);
+    socket.on("ready", initiateCall);
 
-    socketRef.current?.on("leave", onPeerLeave);
+    socket.on("leave", onPeerLeave);
 
-    socketRef.current?.on("offer", handleReceivedOffer);
-    socketRef.current?.on("answer", handleAnswer);
-    socketRef.current?.on("ice-candidate", handlerNewIceCandidateMsg);
+    socket.on("offer", handleReceivedOffer);
+    socket.on("answer", handleAnswer);
+    socket.on("ice-candidate", handlerNewIceCandidateMsg);
 
     return () => {
-      socketRef.current?.disconnect();
+      socket.disconnect();
     };
-  }, [roomId, userStream, setUserStream]);
+  }, [roomId]);
 
   const leaveRoom = () => {
-    socketRef.current?.emit("leave", roomId);
+    socket.emit("leave", roomId);
 
     if (userVideoRef.current?.srcObject) {
       (userVideoRef.current.srcObject as MediaStream)
@@ -199,6 +200,7 @@ export const useWebRTCPeerConnection = ({ roomId }: HookArgs) => {
     leaveRoom,
     userVideoRef,
     peerVideoRef,
-    userStream,
+    userStream: userStream.current,
+    userStreamEnabled,
   };
 };

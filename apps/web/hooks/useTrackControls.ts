@@ -2,14 +2,15 @@ import { useEffect, useState } from "react";
 
 type HookArgs = {
   stream: MediaStream | null;
+  userStreamEnabled: boolean;
 };
 
-export const useTrackControls = ({ stream }: HookArgs) => {
+export const useTrackControls = ({ stream, userStreamEnabled }: HookArgs) => {
   const [isAudioEnabled, setAudioEnabled] = useState(false);
   const [isVideoEnabled, setVideoEnabled] = useState(false);
 
   useEffect(() => {
-    if (!stream) return;
+    if (!userStreamEnabled || !stream) return;
 
     const audioTracks = stream?.getAudioTracks();
     const videoTracks = stream?.getVideoTracks();
@@ -21,7 +22,7 @@ export const useTrackControls = ({ stream }: HookArgs) => {
     if (videoTracks && videoTracks[0]) {
       setVideoEnabled(videoTracks[0].enabled);
     }
-  }, [stream]);
+  }, [stream, userStreamEnabled]);
 
   const toggleAudio = () => {
     const audioTracks = stream?.getAudioTracks();
