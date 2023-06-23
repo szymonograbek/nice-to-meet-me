@@ -2,14 +2,27 @@
 
 import { CameraOff } from "lucide-react";
 import { forwardRef } from "react";
+import { AspectRatio } from "./ui/aspect-ratio";
 
-export const Camera = forwardRef<HTMLVideoElement>((_props, ref) => {
+export const Camera = forwardRef<
+  HTMLVideoElement,
+  React.VideoHTMLAttributes<HTMLVideoElement>
+>((props, ref) => {
   return (
-    <div className="overflow-hidden rounded-md border-[1px] border-primary min-h-[280px] w-full max-w-[640px] relative">
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-0">
-        <CameraOff className="h-16 w-16" />
-      </div>
-      <video ref={ref} className="z-10 relative" autoPlay playsInline muted />
+    <div className="border-primary relative w-full max-w-[640px] overflow-hidden rounded-md border-[1px]">
+      <AspectRatio ratio={16 / 9}>
+        <div className="relative flex h-full w-full flex-row items-center">
+          <div className="absolute left-1/2 top-1/2 z-0 -translate-x-1/2 -translate-y-1/2">
+            <CameraOff className="h-16 w-16" />
+          </div>
+          <video
+            ref={ref}
+            className="relative z-10 w-full"
+            autoPlay
+            {...props}
+          />
+        </div>
+      </AspectRatio>
     </div>
   );
 });

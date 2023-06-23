@@ -30,30 +30,32 @@ export default function MeetingPage({ params }: MeetingPageProps) {
     useTrackControls({ stream: userStream, userStreamEnabled });
 
   return (
-    <div className="h-full w-full flex flex-col justify-between">
-      <div className="grid gap-3 grid-cols-1 grid-rows-2 justify-items-center">
-        <Camera ref={userVideoRef} />
-        <Camera ref={peerVideoRef} />
-      </div>
+    <div className="h-full w-full">
+      <div className="flex h-full flex-col justify-between">
+        <div className="grid auto-cols-min grid-cols-1 justify-items-center gap-4">
+          <Camera ref={userVideoRef} muted />
+          <Camera ref={peerVideoRef} />
+        </div>
 
-      <div className="flex flex-row items-center w-full justify-center">
-        <TrackSwitch
-          icon={isAudioEnabled ? <Mic /> : <MicOff />}
-          tooltip={isAudioEnabled ? "Mute" : "Unmute"}
-          className="mr-2"
-          onClick={toggleAudio}
-        />
+        <div className="mt-8 flex flex-row items-center justify-center">
+          <TrackSwitch
+            icon={isAudioEnabled ? <Mic /> : <MicOff />}
+            tooltip={isAudioEnabled ? "Mute" : "Unmute"}
+            className="mr-2"
+            onClick={toggleAudio}
+          />
 
-        <TrackSwitch
-          icon={isVideoEnabled ? <Video /> : <VideoOff />}
-          tooltip={isAudioEnabled ? "Camera off" : "Camera on"}
-          className="mr-2"
-          onClick={toggleVideo}
-        />
+          <TrackSwitch
+            icon={isVideoEnabled ? <Video /> : <VideoOff />}
+            tooltip={isAudioEnabled ? "Camera off" : "Camera on"}
+            className="mr-2"
+            onClick={toggleVideo}
+          />
 
-        <Button onClick={leaveRoom} variant="destructive">
-          <PhoneOff className="h-4 mr-2" /> Leave
-        </Button>
+          <Button onClick={leaveRoom} variant="destructive">
+            <PhoneOff className="mr-2 h-4" /> Leave
+          </Button>
+        </div>
       </div>
     </div>
   );

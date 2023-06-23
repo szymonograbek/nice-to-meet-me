@@ -8,5 +8,5 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <div className="p-4 sm:p-8 h-screen w-screen">{children}</div>;
+  return <div className="h-screen w-screen p-4 pb-8 sm:p-8">{children}</div>;
 }

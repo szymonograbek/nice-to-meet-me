@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@radix-ui/react-aspect-ratio": "^1.0.3",
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-toggle": "^1.0.3",
     "@radix-ui/react-tooltip": "^1.0.6",
@@ -31,5 +32,8 @@
     "tailwindcss-animate": "^1.0.5",
     "typescript": "5.0.4",
     "validation": "workspace:^"
+  },
+  "devDependencies": {
+    "eslint-plugin-tailwindcss": "^3.12.1"
   }
 }
