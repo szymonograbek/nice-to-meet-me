@@ -36,7 +36,7 @@ export const useWebRTCPeerConnection = ({
   useEffect(() => {
     socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL!);
 
-    // Join the socket
+    console.log(`Joining room ${roomId}`);
     socketRef.current?.emit("join", roomId);
 
     return () => {
@@ -46,6 +46,7 @@ export const useWebRTCPeerConnection = ({
 
   useEffect(() => {
     const handleRoomCreated = async () => {
+      console.log(`Room created`);
       hostRef.current = true;
 
       await requestUserVideoUpdate();
@@ -60,6 +61,7 @@ export const useWebRTCPeerConnection = ({
 
   useEffect(() => {
     const handleRoomJoined = async () => {
+      console.log(`Room joined ${roomId}`);
       setPeerConnected(true);
 
       const stream = await requestUserVideoUpdate();
@@ -76,18 +78,21 @@ export const useWebRTCPeerConnection = ({
 
   useEffect(() => {
     const handleICECandidateEvent = (event: RTCPeerConnectionIceEvent) => {
+      console.log(`ICE Candidate`, { candidate: event.candidate });
       if (event.candidate) {
         socketRef.current?.emit("ice-candidate", event.candidate, roomId);
       }
     };
 
     const handleTrackEvent = (event: RTCTrackEvent) => {
+      console.log(`Peer tracks`, { event });
       if (peerVideoRef.current) {
         peerVideoRef.current.srcObject = event.streams[0];
       }
     };
 
     const createPeerConnection = async () => {
+      console.log(`Create peer connection`);
       const iceServers = await getIceServers();
 
       const connection = new RTCPeerConnection({ iceServers });
@@ -99,6 +104,7 @@ export const useWebRTCPeerConnection = ({
     };
 
     const addTracksToRtcConnection = () => {
+      console.log(`Add tracks to RTC Connection`);
       if (!rtcConnectionRef.current || !userStream) return;
 
       rtcConnectionRef.current.addTrack(userStream.getTracks()[0], userStream);
@@ -106,6 +112,7 @@ export const useWebRTCPeerConnection = ({
     };
 
     const initiateCall = async () => {
+      console.log(`Initiate call`);
       setPeerConnected(true);
 
       if (hostRef.current && userStream) {
@@ -130,6 +137,11 @@ export const useWebRTCPeerConnection = ({
 
         const answer = await rtcConnectionRef.current.createAnswer();
 
+        console.log(`Handle offer and respond with an answer`, {
+          offer,
+          answer,
+        });
+
         // Enable stereo and increatse max bitrate
         answer.sdp = answer.sdp?.replace(
           "useinbandfec=1",
@@ -152,6 +164,8 @@ export const useWebRTCPeerConnection = ({
 
   useEffect(() => {
     const onPeerLeave = () => {
+      console.log(`Peer left`);
+
       hostRef.current = true;
 
       if (peerVideoRef.current?.srcObject) {
@@ -179,6 +193,7 @@ export const useWebRTCPeerConnection = ({
 
   useEffect(() => {
     const handleAnswer = (answer: RTCSessionDescriptionInit) => {
+      console.log(`Peer answered`, { answer });
       rtcConnectionRef.current
         ?.setRemoteDescription(answer)
         .catch((err) => console.log(err));
@@ -193,6 +208,8 @@ export const useWebRTCPeerConnection = ({
 
   useEffect(() => {
     const handlerNewIceCandidateMsg = (incoming: RTCIceCandidateInit) => {
+      console.log(`New ICE Candidate`, { incoming });
+
       const candidate = new RTCIceCandidate(incoming);
 
       rtcConnectionRef.current
@@ -208,6 +225,8 @@ export const useWebRTCPeerConnection = ({
   }, []);
 
   const replaceVideoTrack = useCallback((track: MediaStreamTrack) => {
+    console.log(`Replace video track`, { track });
+
     rtcConnectionRef.current
       ?.getSenders()
       .find((s) => s.track?.kind === track.kind)
