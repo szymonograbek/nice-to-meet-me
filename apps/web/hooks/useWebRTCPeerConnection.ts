@@ -1,5 +1,3 @@
-// import { socket } from "@/lib/socket";
-import { ICE_SERVERS } from "@/utils/constants";
 import {
   MutableRefObject,
   useCallback,
@@ -9,6 +7,7 @@ import {
 } from "react";
 import { Socket, io } from "socket.io-client";
 import { ClientToServerEvents, ServerToClientEvents } from "validation";
+import { getIceServers } from "@/actions/ice-servers";
 
 type HookArgs = {
   roomId: string;
@@ -88,8 +87,10 @@ export const useWebRTCPeerConnection = ({
       }
     };
 
-    const createPeerConnection = () => {
-      const connection = new RTCPeerConnection(ICE_SERVERS);
+    const createPeerConnection = async () => {
+      const iceServers = await getIceServers();
+
+      const connection = new RTCPeerConnection({ iceServers });
 
       connection.onicecandidate = handleICECandidateEvent;
       connection.ontrack = handleTrackEvent;
@@ -108,7 +109,7 @@ export const useWebRTCPeerConnection = ({
       setPeerConnected(true);
 
       if (hostRef.current && userStream) {
-        rtcConnectionRef.current = createPeerConnection();
+        rtcConnectionRef.current = await createPeerConnection();
 
         addTracksToRtcConnection();
 
@@ -121,7 +122,7 @@ export const useWebRTCPeerConnection = ({
 
     const handleReceivedOffer = async (offer: RTCSessionDescriptionInit) => {
       if (!hostRef.current && userStream) {
-        rtcConnectionRef.current = createPeerConnection();
+        rtcConnectionRef.current = await createPeerConnection();
 
         addTracksToRtcConnection();
 
