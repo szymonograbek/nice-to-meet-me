@@ -95,7 +95,11 @@ export const useWebRTCPeerConnection = ({
       console.log(`Create peer connection`);
       const iceServers = await getIceServers();
 
-      const connection = new RTCPeerConnection({ iceServers });
+      console.log({ iceServers });
+
+      const connection = new RTCPeerConnection({
+        iceServers: [{ urls: "stun:stun.relay.metered.ca:80" }],
+      });
 
       connection.onicecandidate = handleICECandidateEvent;
       connection.ontrack = handleTrackEvent;
