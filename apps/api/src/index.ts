@@ -29,6 +29,7 @@ io.on("connection", (socket) => {
     const { rooms } = io.sockets.adapter;
     const room = rooms.get(roomName);
 
+    console.log("user joined", { room });
     // room == undefined when no such room exists.
     if (room === undefined) {
       socket.join(roomName);
@@ -41,7 +42,6 @@ io.on("connection", (socket) => {
       // when there are already two people inside the room.
       socket.emit("full");
     }
-    console.log(rooms);
   });
 
   socket.on("ready", (roomName) => {

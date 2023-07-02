@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type HookArgs = {
   stream: MediaStream | null;
@@ -24,7 +24,7 @@ export const useTrackControls = ({ stream, userStreamEnabled }: HookArgs) => {
     }
   }, [stream, userStreamEnabled]);
 
-  const toggleAudio = () => {
+  const toggleAudio = useCallback(() => {
     const audioTracks = stream?.getAudioTracks();
 
     if (audioTracks && audioTracks[0]) {
@@ -33,9 +33,9 @@ export const useTrackControls = ({ stream, userStreamEnabled }: HookArgs) => {
       audioTracks[0].enabled = newState;
       setAudioEnabled(newState);
     }
-  };
+  }, [stream]);
 
-  const toggleVideo = () => {
+  const toggleVideo = useCallback(() => {
     const videoTracks = stream?.getVideoTracks();
 
     if (videoTracks && videoTracks[0]) {
@@ -44,7 +44,7 @@ export const useTrackControls = ({ stream, userStreamEnabled }: HookArgs) => {
       videoTracks[0].enabled = newState;
       setVideoEnabled(newState);
     }
-  };
+  }, [stream]);
 
   return { isAudioEnabled, isVideoEnabled, toggleAudio, toggleVideo };
 };
