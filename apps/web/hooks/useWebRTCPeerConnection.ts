@@ -17,6 +17,11 @@ type HookArgs = {
   userStream: MediaStream | null;
 };
 
+export enum Quality {
+  LOWER = "lower",
+  HIGHER = "higher",
+}
+
 export const useWebRTCPeerConnection = ({
   roomId,
   userVideoRef,
@@ -32,6 +37,59 @@ export const useWebRTCPeerConnection = ({
   const rtcConnectionRef = useRef<RTCPeerConnection | null>(null);
 
   const [peerConnected, setPeerConnected] = useState(false);
+  const [isUsingTurnServer, setTurnServer] = useState(false);
+  const [quality, setQuality] = useState(Quality.LOWER);
+
+  // const setSdpQuality = (sdp: string, quality: Quality) => {
+  //   let tempSdp = sdp.slice();
+
+  //   const isQualityHigh = quality === Quality.HIGHER;
+
+  //   const audioBandwidth = isQualityHigh ? 256 : 25;
+  //   const videoBandwidth = isQualityHigh ? 1024 : 64;
+
+  //   tempSdp = tempSdp.replace(
+  //     /a=mid:audio\r\n/g,
+  //     "a=mid:audio\r\nb=AS:" + audioBandwidth + "\r\n"
+  //   );
+  //   tempSdp = tempSdp.replace(
+  //     /a=mid:video\r\n/g,
+  //     "a=mid:video\r\nb=AS:" + videoBandwidth + "\r\n"
+  //   );
+
+  //   if (isQualityHigh) {
+  //     tempSdp = tempSdp.replace(
+  //       "useinbandfec=1",
+  //       "useinbandfec=1; stereo=1; maxaveragebitrate=510000"
+  //     );
+  //   }
+
+  //   return tempSdp;
+  // };
+
+  // const renegotiateConnection = async (quality: Quality) => {
+  //   if (!rtcConnectionRef.current || !hostRef.current) return;
+
+  //   const sender = rtcConnectionRef.current.getSenders()[0];
+  //   const params = sender.getParameters();
+
+  //   if (!params.encodings) {
+  //     params.encodings = [{}];
+  //   }
+
+  //   // params.encodings[0].maxBitrate = 512;
+
+  //   await sender.setParameters(params);
+
+  //   // console.log("renegotiate");
+
+  //   // const offer = await rtcConnectionRef.current.createOffer();
+
+  //   // if (offer.sdp) offer.sdp = setSdpQuality(offer.sdp, quality);
+
+  //   // rtcConnectionRef.current?.setLocalDescription(offer);
+  //   // socketRef.current?.emit("offer", offer, roomId);
+  // };
 
   useEffect(() => {
     socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL!);
@@ -80,6 +138,10 @@ export const useWebRTCPeerConnection = ({
     const handleICECandidateEvent = (event: RTCPeerConnectionIceEvent) => {
       console.log(`ICE Candidate`, { candidate: event.candidate });
       if (event.candidate) {
+        const isTURN = event.candidate.type === "relay";
+
+        setTurnServer(isTURN);
+
         socketRef.current?.emit("ice-candidate", event.candidate, roomId);
       }
     };
@@ -95,10 +157,8 @@ export const useWebRTCPeerConnection = ({
       console.log(`Create peer connection`);
       const iceServers = await getIceServers();
 
-      console.log({ iceServers });
-
       const connection = new RTCPeerConnection({
-        iceServers: [{ urls: "stun:stun.relay.metered.ca:80" }],
+        iceServers,
       });
 
       connection.onicecandidate = handleICECandidateEvent;
@@ -145,12 +205,6 @@ export const useWebRTCPeerConnection = ({
           offer,
           answer,
         });
-
-        // Enable stereo and increatse max bitrate
-        answer.sdp = answer.sdp?.replace(
-          "useinbandfec=1",
-          "useinbandfec=1; stereo=1; maxaveragebitrate=510000"
-        );
 
         rtcConnectionRef.current?.setLocalDescription(answer);
         socketRef.current?.emit("answer", answer, roomId);
@@ -263,5 +317,6 @@ export const useWebRTCPeerConnection = ({
     leaveRoom,
     replaceVideoTrack,
     peerConnected,
+    isUsingTurnServer,
   };
 };

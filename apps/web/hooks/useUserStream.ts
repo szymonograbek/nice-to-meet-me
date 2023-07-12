@@ -31,13 +31,19 @@ export const useUserStream = ({ userVideoRef }: HookArgs) => {
   const getVideoSettings = (
     deviceId?: string | null
   ): MediaTrackConstraints | boolean => {
+    const defaultParams: MediaTrackConstraints = {
+      width: 640,
+      height: 480,
+    };
+
     if (deviceId) {
       return {
+        ...defaultParams,
         deviceId: deviceId,
       };
     }
 
-    return true;
+    return defaultParams;
   };
 
   const getAudioSettings = (

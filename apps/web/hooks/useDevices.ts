@@ -10,6 +10,7 @@ export const useDevices = () => {
   >([]);
 
   useEffect(() => {
+    // TODO: refresh when permissions are set
     const getDevices = async () => {
       const foundDevices = await navigator.mediaDevices.enumerateDevices();
 

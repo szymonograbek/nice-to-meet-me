@@ -15,7 +15,7 @@ export const Camera = forwardRef<
         </div>
         <video
           ref={ref}
-          className="relative z-10 h-full w-full"
+          className="relative z-10 h-full w-full -scale-x-100"
           autoPlay
           playsInline
           {...props}
