@@ -2,14 +2,14 @@
 
 import { Camera } from "@/components/Camera";
 import { TrackSwitch } from "@/components/TrackSwitch";
-import { Button } from "@/components/ui/button";
 import { useTrackControls } from "@/hooks/useTrackControls";
-import { useUserStream } from "@/hooks/useUserStream";
-import { useWebRTCPeerConnection } from "@/hooks/useWebRTCPeerConnection";
 import { Mic, MicOff, PhoneOff, Video, VideoOff } from "lucide-react";
-import { useCallback, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { MeetingDropdownMenu } from "@/components/MeetingDropdownMenu";
+import { useWebRTCPeerConnection } from "@/hooks/useWebRTCPeerConnection";
+import { useUserStream } from "@/hooks/useUserStream";
+import { Button } from "@/components/ui/button";
 
 type MeetingPageProps = {
   params: {
@@ -25,41 +25,48 @@ export default function MeetingPage({ params }: MeetingPageProps) {
 
   const [autoAnimatedParent] = useAutoAnimate();
 
+  const { userStream, changeStreamVideoDevice } = useUserStream();
+
+  const { peerStream, updateCallUserStream, leaveRoom } =
+    useWebRTCPeerConnection({
+      roomId,
+      userStream,
+    });
+
+  useEffect(() => {
+    if (userVideoRef.current) {
+      userVideoRef.current.srcObject = userStream;
+    }
+  }, [userStream]);
+
+  useEffect(() => {
+    if (peerVideoRef.current) {
+      peerVideoRef.current.srcObject = peerStream;
+    }
+  }, [peerStream]);
+
   const {
-    updateUserStream,
-    initializeUserStream,
-    userStream,
-    userStreamEnabled,
-    selectedVideoDevice,
-  } = useUserStream({
-    userVideoRef,
-  });
+    toggleAudio,
+    toggleVideo,
+    isAudioEnabled,
+    isVideoEnabled,
+    selectedDevices,
+  } = useTrackControls({ userStream });
 
-  const { leaveRoom, replaceVideoTrack } = useWebRTCPeerConnection({
-    roomId,
-    userVideoRef: userVideoRef,
-    peerVideoRef: peerVideoRef,
-    userStream: userStream.current,
-    requestUserVideoUpdate: initializeUserStream,
-  });
+  const handleVideoDeviceChange = async (deviceId: string) => {
+    const newStream = await changeStreamVideoDevice(deviceId);
+    updateCallUserStream(newStream);
+  };
 
-  const { toggleAudio, toggleVideo, isAudioEnabled, isVideoEnabled } =
-    useTrackControls({ stream: userStream.current, userStreamEnabled });
+  const handleRoomLeave = () => {
+    leaveRoom();
 
-  const onVideoDeviceSelect = useCallback(
-    async (deviceId: string) => {
-      const stream = await updateUserStream({ videoDeviceId: deviceId });
-
-      const videoTracks = stream?.getVideoTracks();
-
-      if (videoTracks?.length) {
-        const track = videoTracks[0];
-
-        replaceVideoTrack(track);
-      }
-    },
-    [updateUserStream, replaceVideoTrack]
-  );
+    if (peerVideoRef.current?.srcObject) {
+      (peerVideoRef.current.srcObject as MediaStream)
+        .getTracks()
+        .forEach((track) => track.stop());
+    }
+  };
 
   return (
     <div className="flex h-screen w-screen flex-col justify-between p-8">
@@ -90,12 +97,12 @@ export default function MeetingPage({ params }: MeetingPageProps) {
 
         <div className="mr-2">
           <MeetingDropdownMenu
-            selectedVideoDevice={selectedVideoDevice}
-            onVideoDeviceSelect={onVideoDeviceSelect}
+            selectedVideoDevice={selectedDevices.video}
+            onVideoDeviceSelect={handleVideoDeviceChange}
           />
         </div>
 
-        <Button onClick={leaveRoom} variant="destructive">
+        <Button onClick={handleRoomLeave} variant="destructive">
           <PhoneOff className="mr-2 h-4" />
           Leave
         </Button>

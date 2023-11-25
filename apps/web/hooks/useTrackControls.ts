@@ -1,19 +1,27 @@
 import { useCallback, useEffect, useState } from "react";
 
 type HookArgs = {
-  stream: MediaStream | null;
-  userStreamEnabled: boolean;
+  userStream: MediaStream | null;
 };
 
-export const useTrackControls = ({ stream, userStreamEnabled }: HookArgs) => {
+type DevicesState = {
+  audioIn: string | null;
+  video: string | null;
+};
+
+export const useTrackControls = ({ userStream }: HookArgs) => {
   const [isAudioEnabled, setAudioEnabled] = useState(false);
   const [isVideoEnabled, setVideoEnabled] = useState(false);
+  const [selectedDevices, setSelectedDevices] = useState<DevicesState>({
+    audioIn: null,
+    video: null,
+  });
 
   useEffect(() => {
-    if (!userStreamEnabled || !stream) return;
+    if (!userStream) return;
 
-    const audioTracks = stream?.getAudioTracks();
-    const videoTracks = stream?.getVideoTracks();
+    const audioTracks = userStream?.getAudioTracks();
+    const videoTracks = userStream?.getVideoTracks();
 
     if (audioTracks && audioTracks[0]) {
       setAudioEnabled(audioTracks[0].enabled);
@@ -22,29 +30,51 @@ export const useTrackControls = ({ stream, userStreamEnabled }: HookArgs) => {
     if (videoTracks && videoTracks[0]) {
       setVideoEnabled(videoTracks[0].enabled);
     }
-  }, [stream, userStreamEnabled]);
+
+    const tracks = userStream.getTracks();
+
+    const newDevicesState = tracks.reduce<DevicesState>(
+      (state, track) => {
+        if (track.kind === "video") {
+          state.video = track.getSettings().deviceId ?? null;
+        }
+
+        if (track.kind === "audio") {
+          state.audioIn = track.getSettings().deviceId ?? null;
+        }
+
+        return state;
+      },
+      {
+        audioIn: null,
+        video: null,
+      }
+    );
+
+    setSelectedDevices((prev) => ({ ...prev, ...newDevicesState }));
+  }, [userStream]);
 
   const toggleAudio = useCallback(() => {
-    const audioTracks = stream?.getAudioTracks();
+    const audioTracks = userStream?.getAudioTracks();
 
-    if (audioTracks && audioTracks[0]) {
-      const newState = !audioTracks[0].enabled;
+    audioTracks?.forEach((track) => (track.enabled = !isAudioEnabled));
 
-      audioTracks[0].enabled = newState;
-      setAudioEnabled(newState);
-    }
-  }, [stream]);
+    setAudioEnabled((prev) => !prev);
+  }, [userStream, isAudioEnabled]);
 
   const toggleVideo = useCallback(() => {
-    const videoTracks = stream?.getVideoTracks();
+    const videoTracks = userStream?.getVideoTracks();
 
-    if (videoTracks && videoTracks[0]) {
-      const newState = !videoTracks[0].enabled;
+    videoTracks?.forEach((track) => (track.enabled = !isVideoEnabled));
 
-      videoTracks[0].enabled = newState;
-      setVideoEnabled(newState);
-    }
-  }, [stream]);
+    setVideoEnabled((prev) => !prev);
+  }, [userStream, isVideoEnabled]);
 
-  return { isAudioEnabled, isVideoEnabled, toggleAudio, toggleVideo };
+  return {
+    isAudioEnabled,
+    isVideoEnabled,
+    toggleAudio,
+    toggleVideo,
+    selectedDevices,
+  };
 };
