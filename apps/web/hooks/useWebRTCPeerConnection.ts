@@ -35,7 +35,7 @@ export const useWebRTCPeerConnection = ({ roomId, userStream }: HookArgs) => {
         host: backendURL.hostname,
         port: parseInt(backendURL.port, 10),
         path: "/peer-server",
-        secure: process.env.NODE_ENV !== "development",
+        secure: backendURL.protocol.includes("https"),
         config: {
           "ice-servers": ICEServers.map((server) => ({ url: server.urls })),
         },
@@ -44,6 +44,8 @@ export const useWebRTCPeerConnection = ({ roomId, userStream }: HookArgs) => {
       currentUserPeerRef.current = peer;
 
       socketRef.current = io(process.env.NEXT_PUBLIC_BACKEND_URL!);
+
+      console.log("Created peer", { peer, backendURL });
 
       peer.on("open", (peerId) => {
         console.log(`Joining room ${roomId}`, { peer });
