@@ -21,7 +21,8 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents, {}, {}>(
   server,
   {
     cors: {
-      origin: process.env.ALLOWED_ORIGINS?.split(","),
+      origin: "*",
+      // origin: process.env.ALLOWED_ORIGINS?.split(","),
     },
   }
 );

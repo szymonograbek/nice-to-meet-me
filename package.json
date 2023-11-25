@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "dotenv -- turbo dev",
     "build": "dotenv -- turbo build",
-    "build:api": "turbo run build --filter=api...",
+    "build:api": "dotenv -- turbo run build --filter=api...",
     "prune:api": "dotenv -- turbo prune --scope=api --docker",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

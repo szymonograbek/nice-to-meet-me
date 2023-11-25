@@ -11,10 +11,7 @@ type HookArgs = {
   userStream: MediaStream | null;
 };
 
-export enum Quality {
-  LOWER = "lower",
-  HIGHER = "higher",
-}
+const backendURL = new URL(process.env.NEXT_PUBLIC_BACKEND_URL!);
 
 export const useWebRTCPeerConnection = ({ roomId, userStream }: HookArgs) => {
   const socketRef = useRef<Socket<
@@ -34,13 +31,11 @@ export const useWebRTCPeerConnection = ({ roomId, userStream }: HookArgs) => {
 
       const Peer = (await import("peerjs")).default;
 
-      console.log({ ICEServers });
-
       const peer = new Peer({
-        host: "localhost",
-        port: 5001,
+        host: backendURL.hostname,
+        port: parseInt(backendURL.port, 10),
         path: "/peer-server",
-        secure: false,
+        secure: process.env.NODE_ENV !== "development",
         config: {
           "ice-servers": ICEServers.map((server) => ({ url: server.urls })),
         },
@@ -48,7 +43,7 @@ export const useWebRTCPeerConnection = ({ roomId, userStream }: HookArgs) => {
 
       currentUserPeerRef.current = peer;
 
-      socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL!);
+      socketRef.current = io(process.env.NEXT_PUBLIC_BACKEND_URL!);
 
       peer.on("open", (peerId) => {
         console.log(`Joining room ${roomId}`, { peer });
