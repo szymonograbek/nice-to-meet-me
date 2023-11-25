@@ -33,7 +33,7 @@ export const useWebRTCPeerConnection = ({ roomId, userStream }: HookArgs) => {
 
       const peer = new Peer({
         host: backendURL.hostname,
-        port: parseInt(backendURL.port, 10) ?? 8080,
+        port: parseInt(backendURL.port, 10) || 8080,
         path: "/peer-server",
         secure: backendURL.protocol.includes("https"),
         config: {
