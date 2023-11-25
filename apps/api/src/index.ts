@@ -11,6 +11,8 @@ const port = parseInt(process.env.API_PORT ?? "8080", 10);
 
 const peerServer = ExpressPeerServer(server);
 
+peerServer.on("error", (error) => console.error({ error }));
+
 server.listen(port, () =>
   console.log(`Server listening on http://localhost:${port}`)
 );
